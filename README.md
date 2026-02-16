@@ -19,7 +19,10 @@ Add blob storage settings to your `appsettings.json`:
     "DefaultContainer": "documents",
     "DefaultSasExpirationMinutes": 60,
     "MaxFileSizeBytes": 10485760,
-    "AllowedContentTypes": []
+    "AllowedContentTypes": [
+      "image/jpeg",
+      "image/png"
+    ]
   }
 }
 ```

@@ -48,7 +48,7 @@ public class CredentialDocumentStorageTests
                     UploadedAt: now);
             });
 
-        var result = await _sut.UploadAsync(personId, credentialType, content, originalFileName);
+        var result = await _sut.UploadAsync(personId, credentialType, content, originalFileName, ct: TestContext.Current.CancellationToken);
 
         // Verify blob path pattern: {personId}/{credentialType}/{guid}.pdf
         await _blobStorage.Received(1).UploadAsync(
@@ -85,7 +85,7 @@ public class CredentialDocumentStorageTests
                 $"credentials/{callInfo.ArgAt<string>(0)}",
                 "image/jpeg", 1, "\"e\"", DateTimeOffset.UtcNow));
 
-        await _sut.UploadAsync(personId, "license", content, "Photo.JPG");
+        await _sut.UploadAsync(personId, "license", content, "Photo.JPG", ct: TestContext.Current.CancellationToken);
 
         await _blobStorage.Received(1).UploadAsync(
             Arg.Is<string>(n => n.EndsWith(".jpg")),
@@ -104,7 +104,7 @@ public class CredentialDocumentStorageTests
                 Arg.Any<string>(), Arg.Any<BlobSasOptions>(), Arg.Any<CancellationToken>())
             .Returns(new BlobSasUrl(expectedUrl, DateTimeOffset.UtcNow.AddMinutes(30), "person/medical/abc.pdf", "credentials"));
 
-        var url = await _sut.GetViewUrlAsync(blobPath, expirationMinutes: 30);
+        var url = await _sut.GetViewUrlAsync(blobPath, expirationMinutes: 30, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal(expectedUrl, url);
         await _blobStorage.Received(1).GetSasUrlAsync(
@@ -126,7 +126,7 @@ public class CredentialDocumentStorageTests
                 Arg.Any<string>(), Arg.Any<BlobSasOptions>(), Arg.Any<CancellationToken>())
             .Returns(new BlobSasUrl("https://url", DateTimeOffset.UtcNow.AddMinutes(15), blobPath, "credentials"));
 
-        await _sut.GetViewUrlAsync(blobPath);
+        await _sut.GetViewUrlAsync(blobPath, ct: TestContext.Current.CancellationToken);
 
         await _blobStorage.Received(1).GetSasUrlAsync(
             blobPath,
@@ -147,7 +147,7 @@ public class CredentialDocumentStorageTests
                 Arg.Any<string>(), Arg.Any<BlobSasOptions>(), Arg.Any<CancellationToken>())
             .Returns(new BlobSasUrl(expectedUrl, DateTimeOffset.UtcNow.AddMinutes(15), "person/license/doc.pdf", "credentials"));
 
-        var url = await _sut.GetDownloadUrlAsync(blobPath, downloadName);
+        var url = await _sut.GetDownloadUrlAsync(blobPath, downloadName, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal(expectedUrl, url);
         await _blobStorage.Received(1).GetSasUrlAsync(
@@ -170,7 +170,7 @@ public class CredentialDocumentStorageTests
         _blobStorage.DownloadBytesAsync("person/medical/file.pdf", "credentials", Arg.Any<CancellationToken>())
             .Returns(expected);
 
-        var result = await _sut.DownloadAsync(blobPath);
+        var result = await _sut.DownloadAsync(blobPath, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal(expected, result);
     }
@@ -184,7 +184,7 @@ public class CredentialDocumentStorageTests
         _blobStorage.DownloadBytesAsync(blobPath, "credentials", Arg.Any<CancellationToken>())
             .Returns(expected);
 
-        var result = await _sut.DownloadAsync(blobPath);
+        var result = await _sut.DownloadAsync(blobPath, TestContext.Current.CancellationToken);
 
         Assert.Equal(expected, result);
     }
@@ -201,7 +201,7 @@ public class CredentialDocumentStorageTests
         _blobStorage.DeleteAsync("person/license/abc.pdf", "credentials", Arg.Any<CancellationToken>())
             .Returns(deleted);
 
-        var result = await _sut.DeleteAsync(blobPath);
+        var result = await _sut.DeleteAsync(blobPath, ct: TestContext.Current.CancellationToken);
 
         Assert.Equal(deleted, result);
     }
@@ -231,7 +231,7 @@ public class CredentialDocumentStorageTests
             .Returns(blobs.ToAsyncEnumerable());
 
         var results = new List<CredentialDocumentInfo>();
-        await foreach (var item in _sut.ListForPersonAsync(personId))
+        await foreach (var item in _sut.ListForPersonAsync(personId, ct: TestContext.Current.CancellationToken))
             results.Add(item);
 
         Assert.Single(results);
@@ -265,7 +265,7 @@ public class CredentialDocumentStorageTests
             .Returns(blobs.ToAsyncEnumerable());
 
         var results = new List<CredentialDocumentInfo>();
-        await foreach (var item in _sut.ListForPersonAsync(personId))
+        await foreach (var item in _sut.ListForPersonAsync(personId, ct: TestContext.Current.CancellationToken))
             results.Add(item);
 
         Assert.Single(results);
@@ -296,7 +296,7 @@ public class CredentialDocumentStorageTests
             .Returns(blobs.ToAsyncEnumerable());
 
         var results = new List<CredentialDocumentInfo>();
-        await foreach (var item in _sut.ListForPersonAsync(personId))
+        await foreach (var item in _sut.ListForPersonAsync(personId, ct: TestContext.Current.CancellationToken))
             results.Add(item);
 
         Assert.Equal(DateTimeOffset.MinValue, results[0].UploadedAt);
